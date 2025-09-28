@@ -30,7 +30,7 @@ jobs:
 
     # 依存関係のインストール
     - name: Install dependencies
-      run: yarn ci
+      run: yarn install --frozen-lockfile
 
     # リンターの実行（ESLintなどがある場合）
     - name: Run linting
