@@ -1,0 +1,55 @@
+name: CI
+
+# プルリクエストが作成・更新された時に実行
+on:
+  pull_request:
+    branches: [ main, develop ]
+  # mainブランチにpushされた時も実行（オプション）
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+    # リポジトリのコードをチェックアウト
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Node.jsのセットアップ
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'yarn'  # npmキャッシュを有効化
+
+    # 依存関係のインストール
+    - name: Install dependencies
+      run: yarn ci
+
+    # リンターの実行（ESLintなどがある場合）
+    - name: Run linting
+      run: yarn run lint
+      continue-on-error: true  # リンターエラーでもテストは続行
+
+    # JESTテストの実行
+    - name: Run tests
+      run: yarn run test
+
+    # テストカバレッジの生成（オプション）
+    - name: Generate coverage report
+      run: yarn run test:cov
+      continue-on-error: true
+
+    # カバレッジレポートをアップロード（オプション）
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: matrix.node-version == '22.x'  # 1つのバージョンでのみ実行
+      with:
+        file: ./coverage/lcov.info
+        fail_ci_if_error: false
